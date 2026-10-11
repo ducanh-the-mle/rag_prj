@@ -1,0 +1,27 @@
+[project]
+name = "rag-pj"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "duc anh le", email = "leducanh0803@gmail.com" }
+]
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "chromadb>=1.5.9",
+    "fastapi>=0.143.0",
+    "minio>=7.2.20",
+    "numpy>=2.5.3",
+    "ollama>=0.6.3",
+    "pandas>=3.0.6",
+    "pydantic-settings>=2.15.0",
+    "python-dotenv>=1.2.4",
+    "rank-bm25>=0.2.2",
+    "redis>=8.1.0",
+    "requests>=2.34.2",
+    "scikit-learn>=1.9.1",
+    "seaborn>=0.13.2",
+    "sentence-transformers>=6.1.0",
+    "uvicorn[standard]>=0.54.0",
+]
+

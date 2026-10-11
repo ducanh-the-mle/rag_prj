@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>RAG playground</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+    textarea, input[type=text] { width: 100%; box-sizing: border-box; padding: .6rem; font-size: 1rem; }
+    textarea { height: 180px; }
+    button { padding: .6rem 1.2rem; font-size: 1rem; cursor: pointer; margin-top: .5rem; }
+    .card { border: 1px solid #ccc; border-radius: 8px; padding: .8rem; margin-top: .8rem; }
+    .meta { color: #666; font-size: .85rem; margin-bottom: .4rem; }
+    #status { margin-top: .5rem; color: #0a6; }
+  </style>
+</head>
+<body>
+  <h1>RAG playground</h1>
+
+  <h3>1. Your text</h3>
+  <textarea id="text" placeholder="Paste text here, or choose a .txt / .md file below"></textarea>
+  <input type="file" id="file" accept=".txt,.md,.pdf">
+  <br><button id="uploadBtn">Upload</button>
+  <div id="status"></div>
+
+  <h3>2. Ask a question</h3>
+  <input type="text" id="question" placeholder="What does the text say about...?">
+  <button id="askBtn">Ask</button>
+  <div id="results"></div>
+
+<script>
+  let docId = null;
+  const $ = id => document.getElementById(id);
+
+  $("file").addEventListener("change", async e => {
+    const f = e.target.files[0];
+    if (f) $("text").value = await f.text();
+  });
+
+  $("uploadBtn").onclick = async () => {
+    const text = $("text").value.trim();
+    if (!text) return ($("status").textContent = "Add some text first.");
+    $("status").textContent = "Uploading and embedding...";
+    const res = await fetch("/upload", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({text})
+    });
+    const data = await res.json();
+    if (!res.ok) return ($("status").textContent = "Error: " + JSON.stringify(data));
+    docId = data.doc_id;
+    $("status").textContent = `Done. Document ${docId} was cut into ${data.chunks} chunks.`;
+  };
+
+  $("askBtn").onclick = async () => {
+    if (!docId) return ($("results").textContent = "Upload a text first.");
+    const question = $("question").value.trim();
+    if (!question) return;
+    $("results").textContent = "Searching...";
+    const res = await fetch("/ask", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({doc_id: docId, question, top_k: 3})
+    });
+    const data = await res.json();
+    if (!res.ok) return ($("results").textContent = "Error: " + JSON.stringify(data));
+    $("results").innerHTML = "";
+    for (const r of data.results) {
+      const card = document.createElement("div");
+      card.className = "card";
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = `chunk ${r.chunk} · similarity ${r.score}`;
+      const body = document.createElement("div");
+      body.textContent = r.text;
+      card.append(meta, body);
+      $("results").append(card);
+    }
+  };
+</script>
+</body>
+</html>
